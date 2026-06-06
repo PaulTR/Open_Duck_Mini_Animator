@@ -4,6 +4,8 @@ This repository contains the code for animating the **Open Duck Mini** and integ
 
 By combining character-first design principles with generative AI, this project allows you to design custom physical animations (gestures) and trigger them dynamically based on voice conversations with Gemini or your own custom scripts.
 
+[Example project](https://youtube.com/shorts/AD9E_y8t4Yc)
+
 ## Repository Structure
 
 ```
@@ -87,6 +89,8 @@ Contains the runtime scripts for the robot:
 ---
 
 ## Usage Workflow
+
+You can visually watch it [here](https://youtu.be/iVbLJOgqmK8)
 
 ### 1. Designing Gestures
 1.  Start the Flask server on the robot:
