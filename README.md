@@ -113,6 +113,10 @@ Once you have defined your gestures (e.g., `yes`, `no`, `beep`), you can run the
     ```
 3.  Speak to the robot. The Gemini Live API will interpret your voice input and trigger the appropriate physical gestures (like nodding to show agreement) without relying on synthetic speech, acting as a silent, physical agent.
 
+## Tips
+
+* Play with your action step duration. Longer time on a step means the robot moves a bit slower, but also doesn't do a jerking animation from too many frames happening too quickly.
+
 ## License
 
 This project is licensed under the Apache 2.0 License - see the [LICENSE](LICENSE) file for details.
