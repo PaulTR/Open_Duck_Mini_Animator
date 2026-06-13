@@ -69,10 +69,15 @@ def apply_interpolation_dampening(interp_type):
     else: # bezier
         set_hardware_dampening(30, 400)
 
-def bezier_interpolate(t, type_str):
-    if type_str == 'linear': return t
-    if type_str in ['bezier', 'bezier_viscous', 'bezier_clamped']:
-        return t * t * (3.0 - 2.0 * t)
+def bezier_interpolate(t, type_str):  
+    if type_str == 'linear':
+        return t
+    if type_str == 'bezier':
+        return t * t * (3.0 - 2.0 * t)                  # Standard smoothstep (cubic Hermite)
+    if type_str == 'bezier_viscous':
+        return t * t * t * (t * (t * 6.0 - 15.0) + 10.0) # Quintic ease-in-out (smoother start/end)
+    if type_str == 'bezier_clamped':
+        return 1.0 - (1.0 - t) ** 3                      # Cubic ease-out (fast start, slow end)
     return t
 
 @app.route('/read', methods=['GET'])
