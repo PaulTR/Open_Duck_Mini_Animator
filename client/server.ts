@@ -97,6 +97,40 @@ app.post('/api/play', async (req, res) => {
   }
 });
 
+app.post('/api/stop', async (req, res) => {
+  if (mockMode) {
+    return res.json({ success: true, message: 'Mock stop' });
+  }
+  if (!activeHost) {
+    return res.status(400).json({ error: 'Not connected' });
+  }
+
+  try {
+    const response = await fetch(`${activeHost}/stop`, { method: 'POST' });
+    const data = await response.json();
+    res.json(data);
+  } catch (error: any) {
+    res.status(500).json({ error: `Stop failed: ${error.message}` });
+  }
+});
+
+app.post('/api/reset', async (req, res) => {
+  if (mockMode) {
+    return res.json({ success: true, message: 'Mock reset' });
+  }
+  if (!activeHost) {
+    return res.status(400).json({ error: 'Not connected' });
+  }
+
+  try {
+    const response = await fetch(`${activeHost}/reset`, { method: 'POST' });
+    const data = await response.json();
+    res.json(data);
+  } catch (error: any) {
+    res.status(500).json({ error: `Reset failed: ${error.message}` });
+  }
+});
+
 // Vite Setup
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
