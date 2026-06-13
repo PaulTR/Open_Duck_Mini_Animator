@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Play, Copy, Trash, Plus, Link, Unlink, Sun, Video, 
-  Activity, Settings, PlaySquare, Code, Terminal
+  Activity, Settings, PlaySquare, Code, Terminal, Square, RotateCcw
 } from 'lucide-react';
 import { Keyframe, InterpolationType, AntennaPosition } from './types';
 import { generateApiServerCode, generatePythonCode } from './generators';
@@ -28,6 +28,8 @@ export default function App() {
 
   const [codeTab, setCodeTab] = useState<'script' | 'api'>('script');
   const [copied, setCopied] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportFilename, setExportFilename] = useState('action');
 
   const handleConnect = async () => {
     if (connected) {
@@ -106,6 +108,44 @@ export default function App() {
       setPlaying(false);
       setActiveFrameId(null);
     }
+  };
+
+  const handleStop = async () => {
+    try {
+      await fetch('/api/stop', { method: 'POST' });
+    } catch (e: any) {
+      alert('Stop error: ' + e.message);
+    }
+    setPlaying(false);
+    setActiveFrameId(null);
+  };
+
+  const handleReset = async () => {
+    try {
+      if (window.confirm('Are you sure you want to restart the background server process?')) {
+        await fetch('/api/reset', { method: 'POST' });
+      }
+    } catch (e: any) {
+      alert('Reset error: ' + e.message);
+    }
+    setPlaying(false);
+    setActiveFrameId(null);
+  };
+
+  const triggerExport = () => {
+    let filename = exportFilename;
+    if (!filename || filename.trim() === "") {
+      filename = "action.json";
+    } else if (!filename.endsWith(".json")) {
+      filename += ".json";
+    }
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ keyframes, globalSound }, null, 2));
+    const dlAnchorElem = document.createElement('a');
+    dlAnchorElem.setAttribute("href",     dataStr     );
+    dlAnchorElem.setAttribute("download", filename);
+    dlAnchorElem.click();
+    dlAnchorElem.remove();
+    setShowExportModal(false);
   };
 
   const updateKeyframe = (id: string, updates: Partial<Keyframe>) => {
@@ -217,11 +257,8 @@ export default function App() {
                </button>
                <button
                  onClick={() => {
-                   const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ keyframes, globalSound }, null, 2));
-                   const dlAnchorElem = document.createElement('a');
-                   dlAnchorElem.setAttribute("href",     dataStr     );
-                   dlAnchorElem.setAttribute("download", "action.json");
-                   dlAnchorElem.click();
+                   setExportFilename('action');
+                   setShowExportModal(true);
                  }}
                  disabled={keyframes.length === 0}
                  title="Export JSON"
@@ -244,9 +281,25 @@ export default function App() {
                <button
                  onClick={handlePlay}
                  disabled={!connected || playing || keyframes.length === 0}
-                 className="bg-emerald-500 hover:bg-emerald-400 text-neutral-950 disabled:opacity-50 text-xs font-medium py-1.5 px-3 rounded-md flex items-center gap-1.5 transition-colors"
+                 className={`bg-emerald-500 hover:bg-emerald-400 text-neutral-950 disabled:opacity-50 text-xs font-medium py-1.5 px-3 rounded-md flex items-center gap-1.5 transition-colors ${playing ? 'opacity-50' : ''}`}
                >
                  <Play className="w-3 h-3" fill="currentColor" /> {playing ? 'Playing...' : 'Play'}
+               </button>
+               <button
+                 onClick={handleStop}
+                 disabled={!connected || !playing}
+                 className="bg-amber-500 hover:bg-amber-400 text-neutral-950 disabled:opacity-50 text-xs font-medium py-1.5 px-3 rounded-md flex items-center gap-1.5 transition-colors"
+                 title="Stop Playback"
+               >
+                 <Square className="w-3 h-3" fill="currentColor" /> Stop
+               </button>
+               <button
+                 onClick={handleReset}
+                 disabled={!connected}
+                 className="bg-neutral-800 hover:bg-neutral-700 text-neutral-200 disabled:opacity-50 text-xs font-medium py-1.5 px-3 rounded-md flex items-center gap-1.5 transition-colors ml-2"
+                 title="Restart Server & Reset State"
+               >
+                 <RotateCcw className="w-3 h-3" /> Reset Server
                </button>
             </div>
           </div>
@@ -545,6 +598,50 @@ export default function App() {
         </div>
 
       </div>
+
+      {/* Export Modal */}
+      {showExportModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-6 w-full max-w-sm shadow-2xl">
+            <h3 className="text-lg font-medium text-white mb-4">Export Keyframes</h3>
+            <div className="mb-4">
+              <label htmlFor="exportFilename" className="block text-xs font-medium text-neutral-400 uppercase tracking-wider mb-2">Filename</label>
+              <div className="flex bg-neutral-800 rounded-lg border border-neutral-700 overflow-hidden focus-within:border-emerald-500 transition-colors">
+                <input
+                  id="exportFilename"
+                  type="text"
+                  value={exportFilename}
+                  onChange={(e) => setExportFilename(e.target.value)}
+                  className="bg-transparent border-none outline-none w-full px-3 py-2 text-sm text-white"
+                  placeholder="action"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      triggerExport();
+                    }
+                  }}
+                />
+                <span className="bg-neutral-800 text-neutral-500 px-3 py-2 text-sm border-l border-neutral-700 select-none">.json</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 mt-6">
+              <button
+                onClick={() => setShowExportModal(false)}
+                className="px-4 py-2 text-sm font-medium text-neutral-300 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={triggerExport}
+                className="bg-emerald-500 hover:bg-emerald-400 text-neutral-950 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+              >
+                Export Format
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
